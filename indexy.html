@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汉诺塔游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: rgba(30, 30, 50, 0.98);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.8em;
+        }
+
+        .stats-panel {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #252540 0%, #1e1e35 100%);
+            border-radius: 15px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 10px 20px;
+        }
+
+        .stat-label {
+            font-size: 1em;
+            color: #a0a0c0;
+            margin-bottom: 8px;
+        }
+
+        .stat-number {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .control-panel {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        select, button {
+            padding: 12px 24px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        select {
+            border: 3px solid #667eea;
+            background: #252540;
+            color: #667eea;
+        }
+
+        select:hover {
+            background: #667eea;
+            color: #1e1e35;
+        }
+
+        .btn-reset {
+            background: #252540;
+            color: #667eea;
+            border: 3px solid #667eea;
+        }
+
+        .btn-reset:hover {
+            background: #667eea;
+            color: #1e1e35;
+            transform: translateY(-3px);
+        }
+
+        .btn-auto {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+
+        .btn-auto:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-undo {
+            background: #252540;
+            color: #667eea;
+            border: 3px solid #667eea;
+        }
+
+        .btn-undo:hover:not(:disabled) {
+            background: #667eea;
+            color: #1e1e35;
+            transform: translateY(-3px);
+        }
+
+        .btn-undo:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .game-area {
+            margin: 40px 0;
+        }
+
+        .instruction-box {
+            text-align: center;
+            padding: 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .game-board {
+            display: flex;
+            justify-content: space-around;
+            gap: 40px;
+            min-height: 380px;
+            padding: 30px 20px;
+            background: linear-gradient(180deg, 
+                rgba(15, 15, 30, 0.8) 0%, 
+                rgba(20, 20, 40, 0.8) 100%
+            );
+            border-radius: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.15);
+        }
+
+        .tower-wrapper {
+            flex: 1;
+            max-width: 280px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tower-label {
+            padding: 10px 30px;
+            font-size: 1.3em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 25px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .disk-stack {
+            width: 100%;
+            height: 280px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 10px;
+            background: rgba(40, 40, 70, 0.6);
+            border-radius: 15px;
+            border: 2px solid rgba(102, 126, 234, 0.15);
+            transition: all 0.3s;
+        }
+
+        .disk-stack.drag-over {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+            box-shadow: 0 0 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .disk-container {
+            position: absolute;
+            bottom: 15px;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+        }
+
+        .disk {
+            height: 36px;
+            border-radius: 18px;
+            margin: 2px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.95em;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s;
+            cursor: grab;
+            user-select: none;
+            position: relative;
+            border: none;
+        }
+
+        .disk::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 8%;
+            width: 84%;
+            height: 8px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 100%);
+            border-radius: 10px;
+            pointer-events: none;
+        }
+
+        .disk:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
+        }
+
+        .disk.dragging {
+            opacity: 0.4;
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+
+        .disk.top-disk {
+            cursor: grab;
+        }
+
+        .disk:not(.top-disk) {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .pole {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: calc(100% - 30px);
+            background: linear-gradient(180deg, 
+                rgba(102, 126, 234, 0.25) 0%, 
+                rgba(102, 126, 234, 0.1) 100%
+            );
+            border-radius: 2px;
+            pointer-events: none;
+        }
+
+        .message-box {
+            text-align: center;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: none;
+        }
+
+        .message-box.success {
+            background: rgba(40, 167, 69, 0.2);
+            color: #5fd068;
+            border: 3px solid #28a745;
+        }
+
+        .message-box.error {
+            background: rgba(220, 53, 69, 0.2);
+            color: #f08080;
+            border: 3px solid #dc3545;
+        }
+
+        .message-box.info {
+            background: rgba(102, 126, 234, 0.2);
+            color: #a0a0e0;
+            border: 3px solid #667eea;
+        }
+
+        /* 弹出式完成界面样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-container {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 25px;
+            padding: 50px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+            transform: scale(0.8) translateY(20px);
+            transition: all 0.3s ease;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .modal-overlay.show .modal-container {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            animation: bounce 1s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .modal-title {
+            font-size: 2.2em;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .modal-subtitle {
+            font-size: 1.3em;
+            color: #a0a0c0;
+            margin-bottom: 25px;
+        }
+
+        .modal-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .modal-stat {
+            text-align: center;
+        }
+
+        .modal-stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .modal-stat-label {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .modal-badge {
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+
+        .modal-badge.optimal {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #1a1a2e;
+        }
+
+        .modal-badge.not-optimal {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-btn {
+            padding: 15px 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 10px;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .modal-btn-secondary {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .modal-btn-secondary:hover {
+            background: #667eea;
+            color: #1a1a2e;
+        }
+
+        .rules-section {
+            margin-top: 40px;
+            padding: 25px;
+            background: rgba(30, 30, 50, 0.8);
+            border-radius: 15px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .rules-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .rules-section ul {
+            list-style: none;
+            color: #a0a0c0;
+            line-height: 2.2;
+            font-size: 1.1em;
+        }
+
+        .rules-section li::before {
+            content: "✓ ";
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .stats-panel {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .stat-number {
+                font-size: 1.8em;
+            }
+
+            .game-board {
+                flex-direction: column;
+                align-items: center;
+                gap: 25px;
+            }
+
+            .tower-wrapper {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .disk-stack {
+                height: 220px;
+            }
+
+            .disk {
+                height: 32px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎮 汉诺塔游戏</h1>
+        
+        <div class="stats-panel">
+            <div class="stat-box">
+                <div class="stat-label">当前步数</div>
+                <div class="stat-number" id="steps">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">最优步数</div>
+                <div class="stat-number" id="optimal">7</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">圆盘数量</div>
+                <div class="stat-number" id="diskCount">3</div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <select id="diskSelect" onchange="onDiskCountChange()">
+                <option value="1">1 个圆盘</option>
+                <option value="2">2 个圆盘</option>
+                <option value="3">3 个圆盘</option>
+                <option value="4">4 个圆盘</option>
+                <option value="5">5 个圆盘</option>
+                <option value="6">6 个圆盘</option>
+                <option value="7">7 个圆盘</option>
+                <option value="8">8 个圆盘</option>
+            </select>
+            <button class="btn-reset" onclick="startNewGame()">🔄 重新开始</button>
+            <button class="btn-undo" onclick="undoMove()" id="undoBtn" disabled>↩️ 撤销</button>
+            <button class="btn-auto" onclick="autoSolve()">🎯 自动求解</button>
+        </div>
+
+        <div class="game-area">
+            <div class="instruction-box" id="instruction">
+                🖱️ 拖动最上层的圆盘到目标柱子上即可移动
+            </div>
+
+            <div class="game-board">
+                <div class="tower-wrapper">
+                    <div class="tower-label">柱子 A</div>
+                    <div class="disk-stack" id="tower-A" 
+                         ondragover="handleDragOver(event)" 
+                         ondragleave="handleDragLeave(event)" 
+                         ondrop="handleDrop(event, 'A')">
+                        <div class="pole"></div>
+                        <div class="disk-container" id="disks-A"></div>
+                    </div>
+                </div>
+
+                <div class="tower-wrapper">
+                    <div class="tower-label">柱子 B</div>
+                    <div class="disk-stack" id="tower-B" 
+                         ondragover="handleDragOver(event)" 
+                         ondragleave="handleDragLeave(event)" 
+                         ondrop="handleDrop(event, 'B')">
+                        <div class="pole"></div>
+                        <div class="disk-container" id="disks-B"></div>
+                    </div>
+                </div>
+
+                <div class="tower-wrapper">
+                    <div class="tower-label">柱子 C</div>
+                    <div class="disk-stack" id="tower-C" 
+                         ondragover="handleDragOver(event)" 
+                         ondragleave="handleDragLeave(event)" 
+                         ondrop="handleDrop(event, 'C')">
+                        <div class="pole"></div>
+                        <div class="disk-container" id="disks-C"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="message-box" id="messageBox"></div>
+
+        <div class="rules-section">
+            <h3>📜 游戏规则</h3>
+            <ul>
+                <li>目标：将所有圆盘从 A 柱移动到 C 柱</li>
+                <li>每次只能移动一个圆盘</li>
+                <li>大圆盘不能放在小圆盘上面</li>
+                <li>操作方法：拖动最上层的圆盘到目标柱子即可</li>
+            </ul>
+            <p style="margin-top: 15px; color: #888; font-size: 0.9em;">💡 提示：本游戏仅支持 1-8 个圆盘，更多数量暂不支持。</p>
+        </div>
+    </div>
+
+    <!-- 弹出式完成界面 -->
+    <div class="modal-overlay" id="winModal">
+        <div class="modal-container">
+            <div class="modal-icon" id="modalIcon">🎉</div>
+            <div class="modal-title" id="modalTitle">恭喜完成！</div>
+            <div class="modal-subtitle" id="modalSubtitle">你成功完成了汉诺塔挑战</div>
+            <div class="modal-badge" id="modalBadge">完成挑战</div>
+            <div class="modal-stats">
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="modalSteps">0</div>
+                    <div class="modal-stat-label">使用步数</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="modalOptimal">0</div>
+                    <div class="modal-stat-label">最优步数</div>
+                </div>
+            </div>
+            <button class="modal-btn modal-btn-primary" onclick="closeWinModal(); startNewGame();">🔄 再玩一次</button>
+            <button class="modal-btn modal-btn-secondary" onclick="closeWinModal();">✕ 关闭</button>
+        </div>
+    </div>
+
+    <script>
+        let towers = { A: [], B: [], C: [] };
+        let steps = 0;
+        let diskCount = 3;
+        let isAutoSolving = false;
+        let draggedDisk = null;
+        let sourceTower = null;
+        let moveHistory = []; // 记录移动历史，用于撤销
+
+        const colors = [
+            'linear-gradient(135deg, #FF6B6B 0%, #ee5a5a 100%)',
+            'linear-gradient(135deg, #4ECDC4 0%, #3dbdb5 100%)',
+            'linear-gradient(135deg, #45B7D1 0%, #34a7c1 100%)',
+            'linear-gradient(135deg, #FFA07A 0%, #ee9170 100%)',
+            'linear-gradient(135deg, #98D8C8 0%, #88c8b8 100%)',
+            'linear-gradient(135deg, #F7DC6F 0%, #e7cc5f 100%)',
+            'linear-gradient(135deg, #BB8FCE 0%, #ab7fbe 100%)'
+        ];
+
+        function startNewGame() {
+            if (isAutoSolving) {
+                showMessage('自动求解中，无法重新开始', 'error');
+                return;
+            }
+
+            diskCount = parseInt(document.getElementById('diskSelect').value);
+            towers = { A: [], B: [], C: [] };
+            steps = 0;
+            moveHistory = []; // 清空历史记录
+
+            for (let i = diskCount; i >= 1; i--) {
+                towers.A.push(i);
+            }
+
+            updateUI();
+            showMessage('游戏开始！拖动圆盘开始游戏！', 'info');
+        }
+
+        // 实时变换圆盘数量
+        function onDiskCountChange() {
+            if (isAutoSolving) {
+                showMessage('自动求解中，无法更改圆盘数量', 'error');
+                // 恢复之前的值
+                document.getElementById('diskSelect').value = diskCount;
+                return;
+            }
+
+            diskCount = parseInt(document.getElementById('diskSelect').value);
+            towers = { A: [], B: [], C: [] };
+            steps = 0;
+            moveHistory = []; // 清空历史记录
+
+            for (let i = diskCount; i >= 1; i--) {
+                towers.A.push(i);
+            }
+
+            updateUI();
+            showMessage(`已切换为 ${diskCount} 个圆盘，游戏重新开始！`, 'info');
+        }
+
+        // 撤销上一步
+        function undoMove() {
+            if (moveHistory.length === 0 || isAutoSolving) {
+                return;
+            }
+
+            const lastMove = moveHistory.pop();
+            const { from, to, disk } = lastMove;
+
+            // 反向移动
+            towers[to].pop();
+            towers[from].push(disk);
+            steps--;
+
+            updateUI();
+            updateUndoButton();
+            showMessage(`已撤销：将圆盘 ${disk} 从 ${to} 移回 ${from}`, 'info');
+        }
+
+        // 更新撤销按钮状态
+        function updateUndoButton() {
+            const undoBtn = document.getElementById('undoBtn');
+            undoBtn.disabled = moveHistory.length === 0 || isAutoSolving;
+        }
+
+        function handleDragStart(event, towerId) {
+            if (isAutoSolving) {
+                event.preventDefault();
+                showMessage('自动求解中，请稍候...', 'error');
+                return;
+            }
+
+            if (towers[towerId].length === 0) {
+                event.preventDefault();
+                return;
+            }
+
+            const topDisk = towers[towerId][towers[towerId].length - 1];
+            if (event.target.textContent.trim() !== String(topDisk)) {
+                event.preventDefault();
+                showMessage('只能移动最上层的圆盘！', 'error');
+                return;
+            }
+
+            draggedDisk = event.target;
+            sourceTower = towerId;
+            
+            event.target.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
+            
+            setTimeout(() => {
+                event.target.style.opacity = '0.4';
+            }, 0);
+        }
+
+        function handleDragEnd(event) {
+            event.target.classList.remove('dragging');
+            event.target.style.opacity = '1';
+            draggedDisk = null;
+            sourceTower = null;
+            
+            document.querySelectorAll('.disk-stack').forEach(stack => {
+                stack.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(event, targetTower) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('drag-over');
+
+            if (!sourceTower || !draggedDisk) return;
+            if (sourceTower === targetTower) {
+                showMessage('圆盘已经在该柱子上！', 'info');
+                return;
+            }
+
+            moveDisk(sourceTower, targetTower);
+        }
+
+        function moveDisk(from, to) {
+            const sourceTower = towers[from];
+            const targetTower = towers[to];
+
+            const diskToMove = sourceTower[sourceTower.length - 1];
+            const targetTopDisk = targetTower.length > 0 ? targetTower[targetTower.length - 1] : 0;
+
+            if (targetTower.length > 0 && diskToMove > targetTopDisk) {
+                showMessage(`❌ 错误：圆盘 ${diskToMove} 比 ${targetTopDisk} 大，不能放在上面！`, 'error');
+                return;
+            }
+
+            sourceTower.pop();
+            targetTower.push(diskToMove);
+            steps++;
+
+            // 记录移动历史
+            moveHistory.push({ from, to, disk: diskToMove });
+            updateUndoButton();
+
+            updateUI();
+            showMessage(`✓ 将圆盘 ${diskToMove} 从 ${from} 移动到 ${to}（第 ${steps} 步）`, 'info');
+
+            if (towers.C.length === diskCount) {
+                setTimeout(() => {
+                    showWinModal(steps === Math.pow(2, diskCount) - 1);
+                }, 300);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('steps').textContent = steps;
+            document.getElementById('optimal').textContent = Math.pow(2, diskCount) - 1;
+            document.getElementById('diskCount').textContent = diskCount;
+
+            ['A', 'B', 'C'].forEach(towerId => {
+                const container = document.getElementById(`disks-${towerId}`);
+                container.innerHTML = '';
+                
+                towers[towerId].forEach((diskSize, index) => {
+                    const disk = document.createElement('div');
+                    disk.className = 'disk';
+                    
+                    if (index === towers[towerId].length - 1) {
+                        disk.classList.add('top-disk');
+                        disk.draggable = true;
+                        disk.ondragstart = function(e) {
+                            handleDragStart(e, towerId);
+                        };
+                        disk.ondragend = handleDragEnd;
+                    } else {
+                        disk.draggable = false;
+                    }
+                    
+                    const minWidth = 60;
+                    const maxWidth = 220;
+                    const width = minWidth + ((diskSize - 1) / Math.max(diskCount - 1, 1)) * (maxWidth - minWidth);
+                    
+                    disk.style.width = `${width}px`;
+                    disk.style.background = colors[(diskSize - 1) % colors.length];
+                    disk.textContent = diskSize;
+                    
+                    container.appendChild(disk);
+                });
+            });
+        }
+
+        function showMessage(text, type) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = text;
+            messageBox.className = `message-box ${type}`;
+            messageBox.style.display = 'block';
+
+            if (type !== 'success') {
+                setTimeout(() => {
+                    messageBox.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        async function autoSolve() {
+            if (isAutoSolving) {
+                showMessage('已经在自动求解中...', 'error');
+                return;
+            }
+
+            diskCount = parseInt(document.getElementById('diskSelect').value);
+            startNewGame();
+            isAutoSolving = true;
+            moveHistory = []; // 自动求解时清空历史
+            updateUndoButton();
+            
+            showMessage('🎯 开始自动求解演示...', 'info');
+
+            await solveHanoi(diskCount, 'A', 'B', 'C');
+
+            isAutoSolving = false;
+            updateUndoButton();
+            showMessage(`✨ 自动求解完成！共用 ${steps} 步`, 'success');
+        }
+
+        async function solveHanoi(n, source, auxiliary, target) {
+            if (n === 1) {
+                await new Promise(resolve => setTimeout(resolve, 600));
+                moveDisk(source, target);
+                return;
+            }
+
+            await solveHanoi(n - 1, source, target, auxiliary);
+            await new Promise(resolve => setTimeout(resolve, 600));
+            moveDisk(source, target);
+            await solveHanoi(n - 1, auxiliary, source, target);
+        }
+
+        // 显示完成弹出界面
+        function showWinModal(isOptimal) {
+            const modal = document.getElementById('winModal');
+            const icon = document.getElementById('modalIcon');
+            const title = document.getElementById('modalTitle');
+            const subtitle = document.getElementById('modalSubtitle');
+            const badge = document.getElementById('modalBadge');
+            const stepsEl = document.getElementById('modalSteps');
+            const optimalEl = document.getElementById('modalOptimal');
+
+            // 设置内容
+            if (isOptimal) {
+                icon.textContent = '🏆';
+                title.textContent = '完美通关！';
+                subtitle.textContent = '你用最优步数完成了挑战！';
+                badge.textContent = '🏅 最优解';
+                badge.className = 'modal-badge optimal';
+            } else {
+                icon.textContent = '🎉';
+                title.textContent = '恭喜完成！';
+                subtitle.textContent = '你成功完成了汉诺塔挑战';
+                badge.textContent = '🎯 完成挑战';
+                badge.className = 'modal-badge not-optimal';
+            }
+
+            stepsEl.textContent = steps;
+            optimalEl.textContent = Math.pow(2, diskCount) - 1;
+
+            // 显示弹窗
+            modal.classList.add('show');
+        }
+
+        // 关闭完成弹出界面
+        function closeWinModal() {
+            const modal = document.getElementById('winModal');
+            modal.classList.remove('show');
+        }
+
+        window.onload = startNewGame;
+    </script>
+</body>
+</html>
